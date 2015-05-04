@@ -1,9 +1,7 @@
 #!/usr/bin/env python2
 
-#TODO: double check amber spot
-# find cobalt spot
 # arrow pointing to spot
-# tequatl melee and engie spot
+# tequatl double damage and engie spot
 # tequatl rotation helper
 
 import ctypes

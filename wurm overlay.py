@@ -1,12 +1,14 @@
 #!/usr/bin/env python2
 
-# arrow pointing to spot
+# rotate arrow with camera rotation
 # tequatl double damage and engie spot
 # tequatl rotation helper
+# change random magic numbers to constants
 
 import ctypes
 import mmap
 import sys
+import math
 from PyQt4 import QtCore, QtGui
 
 class Link(ctypes.Structure):
@@ -50,19 +52,11 @@ class Overlay(QtGui.QWidget):
     def __init__(self):
         super(Overlay,self).__init__()
 
-        grid = QtGui.QGridLayout()
-        self.setLayout(grid)
-
-        xDeltaText = QtGui.QLabel("0")
-        self.xDeltaText = xDeltaText
-        grid.addWidget(xDeltaText)
-
-        yDeltaText = QtGui.QLabel("0")
-        self.yDeltaText = yDeltaText
-        grid.addWidget(yDeltaText)
+        pen = QtGui.QPen()
+        self.pen = pen
 
         self.setWindowFlags(QtCore.Qt.Widget | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.WindowTitleHint)
-        self.setFixedSize(120, 50)
+        self.setFixedSize(120, 120)
         self.setWindowOpacity(1)
 
         self.restoreGeometry(QtCore.QSettings("WurmBlockingHelper").value("overlay/geometry").toByteArray());
@@ -120,16 +114,37 @@ class Overlay(QtGui.QWidget):
 
             coords = result.fAvatarPosition[0:3]
             if lastCoords != coords:
-                #print ("(%f, %f, %f)" % (coords[0]-wurm[0], coords[1]-wurm[1], coords[2]-wurm[2]))
-                #print ("(%f, %f, %f)" % (coords[0], coords[1], coords[2]))
-                dx = coords[0]-wurm[0]
-                dy = coords[2]-wurm[2]
-                self.xDeltaText.setText("{0:.2f}".format(dx))
-                self.yDeltaText.setText("{0:.2f}".format(dy))
                 lastCoords = coords
+                self.repaint()
 
     def closeEvent(self, event):
         QtCore.QSettings("WurmBlockingHelper").setValue("overlay/geometry", self.saveGeometry());
+
+    def paintEvent(self, event):
+        pen = self.pen
+        dx = lastCoords[0]-wurm[0]
+        dy = lastCoords[2]-wurm[2]
+        l = math.sqrt(dx*dx + dy*dy)
+        nx = dx / l
+        ny = dy / l
+
+        painter = QtGui.QPainter(self)
+
+        lineLen = 30 * l
+        print lineLen
+
+        # change color when in range
+        if lineLen < 8:
+            pen.setColor(QtGui.QColor(0, 255, 0))
+        else:
+            pen.setColor(QtGui.QColor(255, 0, 0))
+
+        pen.setWidth(1)
+        painter.setPen(self.pen)
+        painter.drawEllipse(50, 50, 20, 20)
+        pen.setWidth(5)
+        painter.setPen(self.pen)
+        painter.drawLine(60, 60, 60 + (nx*lineLen), 60 + (-ny*lineLen))
 
 def main():
     global wurm

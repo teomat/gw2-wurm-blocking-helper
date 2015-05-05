@@ -45,7 +45,7 @@ wurm = amber
 current_map = 0
 current_map_data = None
 lastCoords = [0,0,0]
-lastCameraPos = [0,0,0]
+lastCameraRot = [0,0,0]
 previous_tick = 0
 result = None
 
@@ -96,7 +96,7 @@ class Overlay(QtGui.QWidget):
         global current_map
         global current_map_data
         global lastCoords
-        global lastCameraPos
+        global lastCameraRot
         global wurm
         global result
         memfile.seek(0)
@@ -118,10 +118,10 @@ class Overlay(QtGui.QWidget):
                 current_map = result.context[7]                
 
             coords = result.fAvatarPosition[0:3]
-            cameraPos = result.fCameraFront[0:3]
-            if lastCoords != coords or cameraPos != lastCameraPos:
+            cameraRot = result.fCameraFront[0:3]
+            if lastCoords != coords or cameraRot != lastCameraRot:
                 lastCoords = coords
-                lastCameraPos = cameraPos
+                lastCameraRot = cameraRot
                 self.repaint()
 
     def closeEvent(self, event):
@@ -151,8 +151,8 @@ class Overlay(QtGui.QWidget):
         painter.drawEllipse(50, 50, 20, 20)
 
         # camera rotation stuffs
-        cx = lastCameraPos[0]
-        cy = lastCameraPos[2]
+        cx = lastCameraRot[0]
+        cy = lastCameraRot[2]
 
         l2 = math.sqrt(cx*cx + cy*cy)
         if l2 == 0: l2 = 1

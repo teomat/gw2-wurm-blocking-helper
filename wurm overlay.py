@@ -1,9 +1,10 @@
 #!/usr/bin/env python2
 
-# rotate arrow with camera rotation
+# auto detect map and closest wurm
 # tequatl double damage and engie spot
 # tequatl rotation helper
 # change random magic numbers to constants
+# allow resizing window
 
 import ctypes
 import mmap
@@ -43,8 +44,10 @@ wurm = amber
 
 current_map = 0
 current_map_data = None
-lastCoords = []
+lastCoords = [0,0,0]
+lastCameraPos = [0,0,0]
 previous_tick = 0
+result = None
 
 memfile = mmap.mmap(0, ctypes.sizeof(Link), "MumbleLink")
 
@@ -93,7 +96,9 @@ class Overlay(QtGui.QWidget):
         global current_map
         global current_map_data
         global lastCoords
+        global lastCameraPos
         global wurm
+        global result
         memfile.seek(0)
         data = memfile.read(ctypes.sizeof(Link))
         result = Unpack(Link, data)
@@ -113,8 +118,10 @@ class Overlay(QtGui.QWidget):
                 current_map = result.context[7]                
 
             coords = result.fAvatarPosition[0:3]
-            if lastCoords != coords:
+            cameraPos = result.fCameraFront[0:3]
+            if lastCoords != coords or cameraPos != lastCameraPos:
                 lastCoords = coords
+                lastCameraPos = cameraPos
                 self.repaint()
 
     def closeEvent(self, event):
@@ -125,13 +132,13 @@ class Overlay(QtGui.QWidget):
         dx = lastCoords[0]-wurm[0]
         dy = lastCoords[2]-wurm[2]
         l = math.sqrt(dx*dx + dy*dy)
+        if l == 0: l = 1
         nx = dx / l
         ny = dy / l
 
         painter = QtGui.QPainter(self)
 
         lineLen = 30 * l
-        print lineLen
 
         # change color when in range
         if lineLen < 8:
@@ -142,9 +149,39 @@ class Overlay(QtGui.QWidget):
         pen.setWidth(1)
         painter.setPen(self.pen)
         painter.drawEllipse(50, 50, 20, 20)
+
+        # camera rotation stuffs
+        cx = lastCameraPos[0]
+        cy = lastCameraPos[2]
+
+        l2 = math.sqrt(cx*cx + cy*cy)
+        if l2 == 0: l2 = 1
+
+        cx = cx / l2
+        cy = cy / l2
+
+        px1 = 60
+        py1 = 60
+
+        tx = -nx*lineLen
+        ty = ny*lineLen
+
+        px2 = tx * cx - ty * cy
+        py2 = tx * cy + ty * cx
+
+        #rotate by another 90*
+        angle = math.pi / 2
+        cos = math.cos(angle)
+        sin = math.sin(angle)
+        rx = px2 * cos - py2 * sin
+        ry = px2 * sin + py2 * cos 
+
+        px2 = rx + 60
+        py2 = ry + 60
+
         pen.setWidth(5)
         painter.setPen(self.pen)
-        painter.drawLine(60, 60, 60 + (nx*lineLen), 60 + (-ny*lineLen))
+        painter.drawLine(px1, py1, px2, py2)
 
 def main():
     global wurm

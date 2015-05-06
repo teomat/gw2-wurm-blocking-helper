@@ -10,4 +10,8 @@ py2exe_options = dict(
 	dist_dir="wurm_blocking_helper"
 )
 
-setup(windows=['wurm overlay.py'], options={"py2exe": py2exe_options})
+data_files= [
+	'coordinates.json'
+]
+
+setup(windows=['wurm overlay.py'], options={"py2exe": py2exe_options}, data_files=data_files)

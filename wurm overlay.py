@@ -11,6 +11,7 @@ import mmap
 import sys
 import math
 from PyQt4 import QtCore, QtGui
+import json
 
 class Link(ctypes.Structure):
     _fields_ = [
@@ -35,10 +36,11 @@ def Unpack(ctype, buf):
     ctype_instance = ctypes.cast(ctypes.pointer(cstring), ctypes.POINTER(ctype)).contents
     return ctype_instance
 
+coordinates = json.load(open("coordinates.json"))
 
-amber = [670.2831, -0.23419858515262604, -606.0043]
-crimson = [198.8736, 16.052361, -438.4727]
-cobalt = [-277.9741, -0.23419858515262604, -876.9177]
+amber = coordinates['amber']
+crimson = coordinates['crimson']
+cobalt = coordinates ['cobalt']
 
 wurm = amber
 
@@ -141,7 +143,7 @@ class Overlay(QtGui.QWidget):
 
         pen = self.pen
         dx = lastCoords[0]-wurm[0]
-        dy = lastCoords[2]-wurm[2]
+        dy = lastCoords[2]-wurm[1]
         l = math.sqrt(dx*dx + dy*dy)
         if l == 0: l = 1
         nx = dx / l

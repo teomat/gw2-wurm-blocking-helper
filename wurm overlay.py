@@ -128,6 +128,17 @@ class Overlay(QtGui.QWidget):
         QtCore.QSettings("WurmBlockingHelper").setValue("overlay/geometry", self.saveGeometry());
 
     def paintEvent(self, event):
+        width = self.width()
+        height = self.height()
+
+        # short explanation:
+        # we calculate the delta between the player position and the block spot
+        # and then scale this vector up and rotate it by our camera rotation
+
+        # dx/dy: vector pointing from player to blockspot
+        # l: length of dx/dy
+        # nx/ny: normalized dx/dy
+
         pen = self.pen
         dx = lastCoords[0]-wurm[0]
         dy = lastCoords[2]-wurm[2]
@@ -146,39 +157,48 @@ class Overlay(QtGui.QWidget):
         else:
             pen.setColor(QtGui.QColor(255, 0, 0))
 
-        pen.setWidth(1)
-        painter.setPen(self.pen)
-        painter.drawEllipse(50, 50, 20, 20)
-
-        # camera rotation stuffs
+        # camera rotation vector
+        # we only care about the world from a top down view so we ignore the 3d y component
         cx = lastCameraRot[0]
         cy = lastCameraRot[2]
 
+        # normalize the vector
+        # needed cause we discarded the y component
         l2 = math.sqrt(cx*cx + cy*cy)
         if l2 == 0: l2 = 1
-
         cx = cx / l2
         cy = cy / l2
 
-        px1 = 60
-        py1 = 60
-
+        # scale the normalized direction
         tx = -nx*lineLen
         ty = ny*lineLen
 
+        # rotate the vector by our camera rotation
         px2 = tx * cx - ty * cy
         py2 = tx * cy + ty * cx
 
-        #rotate by another 90*
+        # rotate by another 90*
         angle = math.pi / 2
         cos = math.cos(angle)
         sin = math.sin(angle)
         rx = px2 * cos - py2 * sin
         ry = px2 * sin + py2 * cos 
 
-        px2 = rx + 60
-        py2 = ry + 60
+        # center of the window, star point of our line
+        px1 = width / 2
+        py1 = height / 2
 
+        # offset the vector
+        px2 = rx + px1
+        py2 = ry + py1
+
+        # draw the center circle
+        circleRadius = 10
+        pen.setWidth(1)
+        painter.setPen(self.pen)
+        painter.drawEllipse(px1 - circleRadius, py1 - circleRadius, circleRadius * 2, circleRadius * 2)
+
+        # draw our directional line
         pen.setWidth(5)
         painter.setPen(self.pen)
         painter.drawLine(px1, py1, px2, py2)

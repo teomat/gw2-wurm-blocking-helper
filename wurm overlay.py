@@ -78,7 +78,7 @@ class Overlay(QtGui.QWidget):
 
         self.show()
 
-        self.startTimer(200)
+        self.startTimer(1000/30)
 
     def btnClicked(self):
         global wurm

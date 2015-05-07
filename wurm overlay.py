@@ -58,9 +58,16 @@ class Overlay(QtGui.QWidget):
         pen = QtGui.QPen()
         self.pen = pen
 
-        self.setWindowFlags(QtCore.Qt.Widget | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.WindowTitleHint)
+        #changed flags a bit and background color to introduce transparency-- Elonora
+        self.setWindowOpacity(0.66)
+
+        p = self.palette()
+        p.setColor(self.backgroundRole(), QtCore.Qt.black)
+        self.setPalette(p)
         self.setFixedSize(120, 120)
-        self.setWindowOpacity(1)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowTitleHint )
+        
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
 
         self.restoreGeometry(QtCore.QSettings("WurmBlockingHelper").value("overlay/geometry").toByteArray());
 
@@ -90,6 +97,22 @@ class Overlay(QtGui.QWidget):
             wurm = amber
         if button == "Cobalt":
             wurm = cobalt
+
+#added events so that you can move window with left click and
+# close it with right click-- Elonora
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.offset = event.pos()
+        if event.button() == QtCore.Qt.RightButton:
+            self.close()
+        
+    def mouseMoveEvent(self, event):
+        x=event.globalX()
+        y=event.globalY()
+        x_w = self.offset.x()
+        y_w = self.offset.y()
+        self.move(x-x_w, y-y_w)
+
 
     def timerEvent(self, event):
         self.raise_() #keep always in the foreground hopefully maybe

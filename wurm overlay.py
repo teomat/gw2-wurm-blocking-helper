@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: UTF-8 -*-
 #
 # Copyright (C) 2015 github.com/Stonos
 # Copyright (C) 2015 Matteo Goggi <github.com/teomat>

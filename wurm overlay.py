@@ -81,7 +81,7 @@ class Overlay(QtGui.QWidget):
 
         self.show()
 
-        self.startTimer(1000/30)
+        self.startTimer(1000/60)
 
 #added events so that you can move window with left click and
 # close it with right click-- Elonora

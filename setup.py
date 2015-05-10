@@ -11,7 +11,9 @@ py2exe_options = dict(
 )
 
 data_files= [
-	'coordinates.json'
+	'coordinates.json',
+	'README.md',
+	'COPYING.txt'
 ]
 
 setup(windows=['wurm overlay.py'], options={"py2exe": py2exe_options}, data_files=data_files)

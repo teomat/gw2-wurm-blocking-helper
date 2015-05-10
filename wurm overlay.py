@@ -38,12 +38,6 @@ def Unpack(ctype, buf):
 
 coordinates = json.load(open("coordinates.json"))
 
-amber = coordinates['amber']
-crimson = coordinates['crimson']
-cobalt = coordinates ['cobalt']
-
-wurm = amber
-
 current_map = 0
 current_map_data = None
 lastCoords = [0,0,0]
@@ -66,39 +60,16 @@ class Overlay(QtGui.QWidget):
         p = self.palette()
         p.setColor(self.backgroundRole(), QtCore.Qt.black)
         self.setPalette(p)
-        self.setFixedSize(120, 120)
+        self.setFixedSize(250, 250)
         self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowTitleHint )
         
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
 
         self.restoreGeometry(QtCore.QSettings("WurmBlockingHelper").value("overlay/geometry").toByteArray());
 
-        msgBox = QtGui.QMessageBox(self)
-
-        bcrimson = msgBox.addButton('Crimson', QtGui.QMessageBox.AcceptRole)
-        bamber = msgBox.addButton('Amber', QtGui.QMessageBox.AcceptRole)
-        bcobalt = msgBox.addButton('Cobalt', QtGui.QMessageBox.AcceptRole)
-
-        QtCore.QObject.connect(bcrimson, QtCore.SIGNAL('clicked()'), self.btnClicked)
-        QtCore.QObject.connect(bamber, QtCore.SIGNAL('clicked()'), self.btnClicked)
-        QtCore.QObject.connect(bcobalt, QtCore.SIGNAL('clicked()'), self.btnClicked)
-
-        msgBox.exec_()
-
         self.show()
 
         self.startTimer(1000/30)
-
-    def btnClicked(self):
-        global wurm
-        button = self.sender().text()
-        print button
-        if button == "Crimson":
-            wurm = crimson
-        if button == "Amber":
-            wurm = amber
-        if button == "Cobalt":
-            wurm = cobalt
 
 #added events so that you can move window with left click and
 # close it with right click-- Elonora
@@ -114,7 +85,6 @@ class Overlay(QtGui.QWidget):
         x_w = self.offset.x()
         y_w = self.offset.y()
         self.move(x-x_w, y-y_w)
-
 
     def timerEvent(self, event):
         self.raise_() #keep always in the foreground hopefully maybe
@@ -156,81 +126,115 @@ class Overlay(QtGui.QWidget):
         width = self.width()
         height = self.height()
 
-        # short explanation:
-        # we calculate the delta between the player position and the block spot
-        # and then scale this vector up and rotate it by our camera rotation
-
-        # dx/dy: vector pointing from player to blockspot
-        # l: length of dx/dy
-        # nx/ny: normalized dx/dy
-
-        pen = self.pen
-        dx = lastCoords[0]-wurm[0]
-        dy = lastCoords[2]-wurm[1]
-        l = math.sqrt(dx*dx + dy*dy)
-        if l == 0: l = 1
-        nx = dx / l
-        ny = dy / l
-
         painter = QtGui.QPainter(self)
+        pen = self.pen
 
-        lineLen = 30 * l
+        scale = 15
 
-        # change color when in range
-        if lineLen < 8:
-            pen.setColor(QtGui.QColor(0, 255, 0))
-        else:
-            pen.setColor(QtGui.QColor(255, 0, 0))
+        def getCameraRotation():
+            # camera rotation vector
+            # we only care about the world from a top down view so we ignore the 3d y component
+            cx = lastCameraRot[0]
+            cy = lastCameraRot[2]
 
-        # camera rotation vector
-        # we only care about the world from a top down view so we ignore the 3d y component
-        cx = lastCameraRot[0]
-        cy = lastCameraRot[2]
+            # normalize the vector
+            # needed cause we discarded the y component
+            l = math.sqrt(cx*cx + cy*cy)
+            if l == 0: l = 1
+            cx = cx / l
+            cy = cy / l
 
-        # normalize the vector
-        # needed cause we discarded the y component
-        l2 = math.sqrt(cx*cx + cy*cy)
-        if l2 == 0: l2 = 1
-        cx = cx / l2
-        cy = cy / l2
+            return (cx, cy)
 
-        # scale the normalized direction
-        tx = -nx*lineLen
-        ty = ny*lineLen
+        rx,ry = getCameraRotation()
+        
+        # draw the player marker
+        # rx,ry = camera rotation
+        def drawPlayerPos(px,py, rx,ry, size):
+            pen.setWidth(1)
+            pen.setColor(QtGui.QColor(255, 255, 255))
+            painter.setPen(self.pen)
 
-        # rotate the vector by our camera rotation
-        px2 = tx * cx - ty * cy
-        py2 = tx * cy + ty * cx
+            x1 = px + rx * -size
+            x2 = px + rx * size
+            y1 = py + ry * -size
+            y2 = py + ry * size
+            painter.drawLine(x1, y1, x2, y2)
 
-        # rotate by another 90*
-        angle = math.pi / 2
-        cos = math.cos(angle)
-        sin = math.sin(angle)
-        rx = px2 * cos - py2 * sin
-        ry = px2 * sin + py2 * cos 
+            #rotate 90* for second line
+            angle = math.pi / 2
+            cos = math.cos(angle)
+            sin = math.sin(angle)
+            rx2 = rx * cos - ry * sin
+            ry2 = rx * sin + ry * cos
 
-        # center of the window, star point of our line
-        px1 = width / 2
-        py1 = height / 2
+            x1 = px + rx2 * -size
+            x2 = px + rx2 * size
+            y1 = py + ry2 * -size
+            y2 = py + ry2 * size
 
-        # offset the vector
-        px2 = rx + px1
-        py2 = ry + py1
+            painter.drawLine(x1, y1, x2, y2)
 
-        # draw the center circle
-        circleRadius = 10
-        pen.setWidth(1)
-        painter.setPen(self.pen)
-        painter.drawEllipse(px1 - circleRadius, py1 - circleRadius, circleRadius * 2, circleRadius * 2)
+        # draw the player at the center of the screen
+        drawPlayerPos(width / 2,height / 2, rx,ry, size= 10)
 
-        # draw our directional line
-        pen.setWidth(5)
-        painter.setPen(self.pen)
-        painter.drawLine(px1, py1, px2, py2)
+        # px,py = player position
+        # bx,by = blockspot
+        # rx,ry = camera rotation
+        def drawBlockSpot(px,py, bx,by, rx, ry, spotSize, dodgeSize):
+            # vector from player to blockspot
+            dx = px - bx
+            dy = py - by
+
+            # distance to blockspot
+            l = math.sqrt(dx*dx + dy*dy)
+            if l == 0: l = 1
+            nx = dx / l
+            ny = dy / l
+
+            lineLen = scale * l
+
+            tx = nx*lineLen
+            ty = -ny*lineLen
+
+            # rotate the vector by our camera rotation
+            px2 = tx * rx - ty * ry
+            py2 = tx * ry + ty * rx
+
+            # rotate by another 90*
+            angle = math.pi / 2
+            cos = math.cos(angle)
+            sin = math.sin(angle)
+            rx = px2 * cos - py2 * sin
+            ry = px2 * sin + py2 * cos 
+
+            px1 = width / 2
+            py1 = height / 2
+
+            px2 = rx + px1
+            py2 = ry + py1
+
+            # change color when in range
+            if lineLen < spotSize:
+                pen.setColor(QtGui.QColor(0, 255, 0))
+            else:
+                pen.setColor(QtGui.QColor(255, 0, 0))
+
+            pen.setWidth(1)
+            painter.setPen(pen)
+
+            painter.drawEllipse(px2 - spotSize, py2 - spotSize, spotSize * 2, spotSize * 2)
+            painter.drawEllipse(px2 - dodgeSize, py2 - dodgeSize, dodgeSize * 2, dodgeSize * 2)
+
+        px = lastCoords[0]
+        py = lastCoords[2]
+
+        for _,wurm in coordinates.iteritems():
+            bx = wurm[0]
+            by = wurm[1]
+            drawBlockSpot(px,py, bx,by, rx,ry, spotSize = 6, dodgeSize = 110)
 
 def main():
-    global wurm
-
     a = QtGui.QApplication([])
 
     overlay = Overlay()

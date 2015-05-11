@@ -86,6 +86,7 @@ class Overlay(QtGui.QWidget):
         self.startTimer(1000/60)
 
         self.resizing = False
+        self.moving = False
 
         self.zoom, _ = QtCore.QSettings("WurmBlockingHelper").value("overlay/zoom").toFloat()
         if not self.zoom:
@@ -96,11 +97,16 @@ class Overlay(QtGui.QWidget):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.offset = event.pos()
+            self.moving = True
         if event.button() == QtCore.Qt.RightButton:
             self.close()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.moving = False
         
     def mouseMoveEvent(self, event):
-        if not self.resizing:
+        if not self.resizing and self.moving:
             x=event.globalX()
             y=event.globalY()
             x_w = self.offset.x()

@@ -286,7 +286,7 @@ class Overlay(QtGui.QWidget):
         for _,wurm in coordinates.iteritems():
             bx = wurm[0]
             by = wurm[1]
-            drawBlockSpot(px,py, bx,by, rx,ry, spotSize = 6, dodgeSize = 110)
+            drawBlockSpot(px,py, bx,by, rx,ry, spotSize = 3, dodgeSize = 110)
 
 def main():
     a = QtGui.QApplication([])

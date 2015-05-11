@@ -72,8 +72,8 @@ class Overlay(QtGui.QWidget):
         p = self.palette()
         p.setColor(self.backgroundRole(), QtCore.Qt.black)
         self.setPalette(p)
-        self.setFixedSize(250, 250)
-        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowTitleHint )
+        self.resize(250, 250)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowTitleHint)
         
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
 
@@ -82,6 +82,12 @@ class Overlay(QtGui.QWidget):
         self.show()
 
         self.startTimer(1000/60)
+
+        self.resizing = False
+
+        self.zoom, _ = QtCore.QSettings("WurmBlockingHelper").value("overlay/zoom").toFloat()
+        if not self.zoom:
+            self.zoom = 1
 
 #added events so that you can move window with left click and
 # close it with right click-- Elonora
@@ -92,11 +98,38 @@ class Overlay(QtGui.QWidget):
             self.close()
         
     def mouseMoveEvent(self, event):
-        x=event.globalX()
-        y=event.globalY()
-        x_w = self.offset.x()
-        y_w = self.offset.y()
-        self.move(x-x_w, y-y_w)
+        if not self.resizing:
+            x=event.globalX()
+            y=event.globalY()
+            x_w = self.offset.x()
+            y_w = self.offset.y()
+            self.move(x-x_w, y-y_w)
+
+    # key events to restore the border when we hold down a key, allows resizing the window
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Alt and not self.resizing:
+            self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.FramelessWindowHint)
+            self.show()
+            x = self.pos().x()
+            y = self.pos().y()
+            # restoring the window border moves the window for some reason
+            # move it back to where we had it
+            self.move(x - 8, y - 30)
+            self.resizing = True
+
+    def keyReleaseEvent(self, event):
+        if event.isAutoRepeat() == False  and event.key() == QtCore.Qt.Key_Alt and self.resizing:
+            self.resizing = False
+            self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
+            self.show()
+
+    def wheelEvent(self, event):
+        if event.delta() > 0:
+            self.zoom *= 1.2
+        elif event.delta() < 0:
+            self.zoom /= 1.2
+        self.zoom = min(max(self.zoom, 0.2), 5)
+        self.repaint()
 
     def timerEvent(self, event):
         self.raise_() #keep always in the foreground hopefully maybe
@@ -133,15 +166,22 @@ class Overlay(QtGui.QWidget):
 
     def closeEvent(self, event):
         QtCore.QSettings("WurmBlockingHelper").setValue("overlay/geometry", self.saveGeometry());
+        QtCore.QSettings("WurmBlockingHelper").setValue("overlay/zoom", self.zoom);
 
     def paintEvent(self, event):
         width = self.width()
         height = self.height()
-
         painter = QtGui.QPainter(self)
         pen = self.pen
 
-        scale = 15
+        painter.translate(width / 2, height / 2)
+
+        # scale up depending on window size + whatever zoom level we set
+        scale = min(width / 250, height / 250) * self.zoom
+        painter.scale(scale, scale)
+
+        # distance scaling for block and dodge radius
+        distScale = 15
 
         def getCameraRotation():
             # camera rotation vector
@@ -188,7 +228,7 @@ class Overlay(QtGui.QWidget):
             painter.drawLine(x1, y1, x2, y2)
 
         # draw the player at the center of the screen
-        drawPlayerPos(width / 2,height / 2, rx,ry, size= 10)
+        drawPlayerPos(0,0, rx,ry, size = 10)
 
         # px,py = player position
         # bx,by = blockspot
@@ -204,10 +244,10 @@ class Overlay(QtGui.QWidget):
             nx = dx / l
             ny = dy / l
 
-            lineLen = scale * l
+            dist = distScale * l
 
-            tx = nx*lineLen
-            ty = -ny*lineLen
+            tx = nx*dist
+            ty = -ny*dist
 
             # rotate the vector by our camera rotation
             px2 = tx * rx - ty * ry
@@ -220,14 +260,14 @@ class Overlay(QtGui.QWidget):
             rx = px2 * cos - py2 * sin
             ry = px2 * sin + py2 * cos 
 
-            px1 = width / 2
-            py1 = height / 2
+            px1 = 0
+            py1 = 0
 
             px2 = rx + px1
             py2 = ry + py1
 
             # change color when in range
-            if lineLen < spotSize:
+            if dist < spotSize:
                 pen.setColor(QtGui.QColor(0, 255, 0))
             else:
                 pen.setColor(QtGui.QColor(255, 0, 0))

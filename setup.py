@@ -7,7 +7,8 @@ py2exe_options = dict(
 	includes=['sip'],
 	dll_excludes=['w9xpopen.exe'],
 	compressed=True,
-	dist_dir="wurm_blocking_helper"
+	dist_dir="wurm_blocking_helper",
+	bundle_files=1
 )
 
 data_files= [
@@ -16,4 +17,4 @@ data_files= [
 	'COPYING.txt'
 ]
 
-setup(windows=['wurm overlay.py'], options={"py2exe": py2exe_options}, data_files=data_files)
+setup(windows=['wurm overlay.py'], options={"py2exe": py2exe_options}, zipfile=None, data_files=data_files)

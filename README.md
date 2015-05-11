@@ -6,7 +6,9 @@ Makes use of the mumblelink api to interface with the game.
 ## Usage:
 
 Run Guild Wars 2 in Windowed or Windowed Fullscreen mode, this will not work in Fullscreen mode!  
-Left click drag to move the window, right click to close it.
+Left click drag to move the window, right click to close it.  
+Scroll your mouse wheel to zoom.  
+Hold the Alt key to enable the window border and resize the window.  
   
 The block spots will show up when you move in range of each wurm.  
 The inner circle shows the actual blockspot.  

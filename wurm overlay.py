@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 import ctypes
 import mmap
 import sys
@@ -38,7 +40,7 @@ class Link(ctypes.Structure):
         ("fCameraTop",      ctypes.c_float * 3),
         ("identity",        ctypes.c_wchar * 256),
         ("context_len",     ctypes.c_uint32),
-        ("context",         ctypes.c_uint32 * (256/4)), # is actually 256 bytes of whatever
+        ("context",         ctypes.c_uint32 * int(256/4)), # is actually 256 bytes of whatever
         ("description",     ctypes.c_wchar * 2048)
 
     ]

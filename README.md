@@ -14,6 +14,10 @@ The block spots will show up when you move in range of each wurm.
 The inner circle shows the actual blockspot.  
 The outer circle is one full dodging distance away from the blockspot.  
 
+#### Screenshots:
+![](http://i.imgur.com/iTIivhM.png)
+![](http://i.imgur.com/uzam0JV.png)  
+
 ###Dependencies:
 * python 2.7
 * pyqt 4.8.6

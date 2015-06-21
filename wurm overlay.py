@@ -98,12 +98,12 @@ class Overlay(QtGui.QWidget):
         if event.button() == QtCore.Qt.LeftButton:
             self.offset = event.pos()
             self.moving = True
-        if event.button() == QtCore.Qt.RightButton:
-            self.close()
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.moving = False
+        elif event.button() == QtCore.Qt.RightButton:
+            self.close()
         
     def mouseMoveEvent(self, event):
         if not self.resizing and self.moving:
